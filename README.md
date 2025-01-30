@@ -20,9 +20,13 @@ Cargo.toml                  # Workspace configuration
 └── ...
 📁 config
 ├── config.toml             # Project configuration
-├── entrypoint.sh           # Docker entrypoint file
 ├── genesis.json            # Genesis configuration
-└── jwt.hex                 # Jwt token
+├── jwt.hex                 # Jwt token
+└── 📁 docker
+    ├── docker.rs           # Docker interface
+    ├── engine_api.rs       # Engine API interface
+    ├── kute.rs             # Client interface
+    └── main.rs             # Entrypoint
 📁 profiler                 # Benchmarking logic
 ├── Cargo.toml
 └── 📁 src
