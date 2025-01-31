@@ -2,7 +2,7 @@
 echo "Running custom entrypoint script..."
 
 # Define variables
-GENESIS_FILE="/genesis.json"
+GENESIS_FILE="/config/genesis.json"
 DATA_DIR="/data"
 NETWORK_ID=1700
 JWT_SECRET_FILE="/config/jwt.hex"

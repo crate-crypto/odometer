@@ -1,11 +1,10 @@
 services:
   geth:
-    container_name: geth_node
     image: ethereum/client-go:latest
     ports:
       - "8551:8551"
     volumes:
-      - ./entrypoint.sh:/entrypoint.sh
-      - ./jwt.hex:/config/jwt.hex
-      - ./genesis.json:/genesis.json
+      - ../config/entrypoint.sh:/entrypoint.sh
+      - ../config/jwt.hex:/config/jwt.hex
+      - ../config/genesis.json:/config/genesis.json
     entrypoint: ["/bin/sh", "/entrypoint.sh"]

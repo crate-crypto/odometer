@@ -11,7 +11,7 @@ use std::fs;
 #[tokio::main]
 async fn main() {
     // Setup Engine API credentials
-    let secret = hex::decode(fs::read_to_string("jwt.hex").unwrap().trim()).unwrap();
+    let secret = hex::decode(fs::read_to_string("config/jwt.hex").unwrap().trim()).unwrap();
     let client = JwtClient::new(secret, "http://localhost:8551".to_string());
 
     // Parse Engine API requests that we want to benchmark
@@ -23,7 +23,7 @@ async fn main() {
 
     for bench_input in bench_inputs.into_iter().progress() {
         // Launch client
-        let dc = docker::DockerCompose::new("clients/geth", "test");
+        let dc = docker::DockerCompose::new("geth.yml");
         dc.up().unwrap();
 
         //TODO: Add a healtcheck instead of a manual delay.
