@@ -1,5 +1,5 @@
-use std::process::{Command, Output, exit};
 use std::path::Path;
+use std::process::{exit, Command, Output};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -38,7 +38,7 @@ impl DockerCompose {
                     );
                     // Print the error and exit
                     eprintln!("{}", error_message);
-                    exit(1);  
+                    exit(1);
                 }
                 Ok(output)
             }
@@ -46,7 +46,7 @@ impl DockerCompose {
                 let error_message = format!("Error executing docker command: {}", e);
                 // Print the error and exit
                 eprintln!("{}", error_message);
-                exit(1);  
+                exit(1);
             }
         }
     }
@@ -61,7 +61,7 @@ impl DockerCompose {
     }
 
     pub fn up(&self) -> Result<(), DockerError> {
-        self.run_command(&["-p", &self.get_project_name(),"up","-d"])?;
+        self.run_command(&["-p", &self.get_project_name(), "up", "-d"])?;
         Ok(())
     }
 
