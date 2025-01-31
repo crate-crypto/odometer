@@ -1,4 +1,4 @@
-use std::process::{Command, Output};
+use std::process::{Command, Output, exit};
 use std::path::Path;
 use thiserror::Error;
 
@@ -26,18 +26,29 @@ impl DockerCompose {
             .current_dir("clients")
             .args(["compose", "-f", &self.compose_file])
             .args(args)
-            .output()?;
+            .output();
 
-        if !output.status.success() {
-            let error_message = format!(
-                "{} | stdout: {}",
-                String::from_utf8_lossy(&output.stderr).trim(),
-                String::from_utf8_lossy(&output.stdout).trim()
-            );
-            return Err(DockerError::CommandFailed(error_message));
+        match output {
+            Ok(output) => {
+                if !output.status.success() {
+                    let error_message = format!(
+                        "{} | stdout: {}",
+                        String::from_utf8_lossy(&output.stderr).trim(),
+                        String::from_utf8_lossy(&output.stdout).trim()
+                    );
+                    // Print the error and exit
+                    eprintln!("{}", error_message);
+                    exit(1);  
+                }
+                Ok(output)
+            }
+            Err(e) => {
+                let error_message = format!("Error executing docker command: {}", e);
+                // Print the error and exit
+                eprintln!("{}", error_message);
+                exit(1);  
+            }
         }
-
-        Ok(output)
     }
 
     fn get_project_name(&self) -> String {
@@ -49,14 +60,13 @@ impl DockerCompose {
         format!("odometer-{}", file_name)
     }
 
-
     pub fn up(&self) -> Result<(), DockerError> {
         self.run_command(&["-p", &self.get_project_name(),"up","-d"])?;
         Ok(())
     }
 
     pub fn down(&self) -> Result<(), DockerError> {
-        self.run_command(&["down", "--volumes"])?;
+        self.run_command(&["-p", &self.get_project_name(), "down", "--volumes"])?;
         Ok(())
     }
 }
