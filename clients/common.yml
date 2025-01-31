@@ -1,0 +1,11 @@
+# Description: Common configuration all clients extend from.
+# Configures ports and volumes for the client services.
+# See: https://docs.docker.com/compose/how-tos/multiple-compose-files/extends/
+services:
+  base_client:
+    ports:
+      - "8551:8551"
+    volumes:
+      - ../config/entrypoint.sh:/entrypoint.sh
+      - ../config/jwt.hex:/config/jwt.hex
+      - ../config/genesis.json:/config/genesis.json

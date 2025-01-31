@@ -1,10 +1,7 @@
 services:
   geth:
     image: ethereum/client-go:latest
-    ports:
-      - "8551:8551"
-    volumes:
-      - ../config/entrypoint.sh:/entrypoint.sh
-      - ../config/jwt.hex:/config/jwt.hex
-      - ../config/genesis.json:/config/genesis.json
+    extends:
+      file: ./common.yml
+      service: base_client
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
