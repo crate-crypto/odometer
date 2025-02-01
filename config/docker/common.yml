@@ -6,6 +6,6 @@ services:
     ports:
       - "8551:8551"
     volumes:
-      - ../config/entrypoint.sh:/entrypoint.sh
-      - ../config/jwt.hex:/config/jwt.hex
-      - ../config/genesis.json:/config/genesis.json
+      - ./entrypoint.sh:/entrypoint.sh
+      - ../jwt.hex:/config/jwt.hex
+      - ../genesis.json:/config/genesis.json

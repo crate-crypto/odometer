@@ -1,7 +1,21 @@
 services:
   geth:
     image: ethereum/client-go:latest
+
+    environment:
+      INIT_COMMAND: |
+        geth init --datadir=/data /config/genesis.json
+      RUN_COMMAND: |
+        geth  --syncmode=full \
+              --nodiscover \
+              --datadir=/data \
+              --networkid=1700 \
+              --authrpc.addr=0.0.0.0 \
+              --authrpc.port=8551 \
+              --authrpc.vhosts=* \
+              --authrpc.jwtsecret=/config/jwt.hex
+
     extends:
-      file: ./common.yml
+      file: ../config/docker/common.yml
       service: base_client
     entrypoint: ["/bin/sh", "/entrypoint.sh"]

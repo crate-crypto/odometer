@@ -4,66 +4,74 @@ mod engine_api;
 mod kute;
 
 use bench_summary::{BenchEngineAPIRequestSummary, BenchInput};
+use cli_table::{print_stdout, Cell, Style, Table};
 use indicatif::ProgressIterator;
 use kute::JwtClient;
 use std::fs;
 
 #[tokio::main]
 async fn main() {
-    // Setup Engine API credentials
-    let secret = hex::decode(fs::read_to_string("config/jwt.hex").unwrap().trim()).unwrap();
-    let client = JwtClient::new(secret, "http://localhost:8551".to_string());
-
     // Parse Engine API requests that we want to benchmark
     let mut bench_inputs = read_gas_limit_files("tests/GasLimit").unwrap();
-    // Sort the inputs by name, so they are printed in natural lexographical order
+    // Sort the inputs by name, so they are printed in natural lexicographical order
     bench_inputs.sort_by(|a, b| natural_lexical_cmp(&a.name, &b.name));
 
     let mut rows = Vec::new();
-
-    for bench_input in bench_inputs.into_iter().progress() {
-        // Launch client
-        let dc = docker::DockerCompose::new("geth.yml");
-        dc.up().unwrap();
-
-        //TODO: Add a healtcheck instead of a manual delay.
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-
-        let summary = benchmark_engine_api_request(&client, &bench_input).await;
-
-        // For each summary, we have a table column
-        for sum in summary {
-            let mut column = Vec::new();
-
-            let gas_used_u128 = parse_gas_used(&sum.gas_used);
-            let gas_per_second = compute_gas_per_second(gas_used_u128, sum.time_taken_microseconds);
-            // println!(
-            //     "name: {}\ndesc: {}\ngas_rate: {}",
-            //     parsed.name.clone(),
-            //     parsed.description.clone(),
-            //     format_gas_rate(gas_per_second)
-            // );
-
-            column.push(bench_input.name.clone().cell());
-            column.push(bench_input.description.clone().cell());
-            column.push(format_gas_rate(gas_per_second).cell());
-            rows.push(column);
-        }
-
-        dc.down().unwrap();
+    let mut header = vec!["Name".cell().bold(true), "Description".cell().bold(true)];
+    // push the client names to the header
+    for client in get_clients() {
+        header.push(client.cell().bold(true));
     }
 
-    use cli_table::{print_stdout, Cell, Style, Table};
+    for bench_input in bench_inputs.into_iter().progress() {
+        let mut column = Vec::new();
+        column.push(bench_input.name.clone().cell());
+        column.push(bench_input.description.clone().cell());
 
-    let table = rows
-        .table()
-        .title(vec![
-            "Name".cell().bold(true),
-            "Description".cell().bold(true),
-            "Gas Rate".cell().bold(true),
-        ])
-        .bold(true);
+        for client in get_clients() {
+            let dc = docker::DockerCompose::new(&format!("{}.yml", client));
+            dc.up().unwrap();
+
+            // TODO: Add a health check instead of a manual delay.
+            tokio::time::sleep(std::time::Duration::from_secs(4)).await;
+
+            let summary = benchmark_engine_api_request(&bench_input).await;
+
+            // For each summary, we have a table column
+            for sum in summary {
+                let gas_used_u128 = parse_gas_used(&sum.gas_used);
+                let gas_per_second =
+                    compute_gas_per_second(gas_used_u128, sum.time_taken_microseconds);
+
+                column.push(format_gas_rate(gas_per_second).cell());
+            }
+
+            dc.down().unwrap();
+        }
+
+        rows.push(column);
+    }
+
+    let table = rows.table().title(header).bold(true);
     assert!(print_stdout(table).is_ok());
+}
+
+fn get_clients() -> Vec<String> {
+    let client_files = fs::read_dir("clients").unwrap();
+    let mut clients = Vec::new();
+    for client_file in client_files
+        .filter_map(Result::ok)
+        .filter(|client_file| client_file.path().extension().unwrap() == "yml")
+    {
+        let client_name = client_file
+            .file_name()
+            .to_str()
+            .unwrap()
+            .trim_end_matches(".yml")
+            .to_string();
+        clients.push(client_name);
+    }
+    clients
 }
 
 fn read_gas_limit_files(path_to_dir: &str) -> Result<Vec<BenchInput>, Box<dyn std::error::Error>> {
@@ -78,9 +86,12 @@ fn read_gas_limit_files(path_to_dir: &str) -> Result<Vec<BenchInput>, Box<dyn st
 }
 
 async fn benchmark_engine_api_request(
-    client: &JwtClient,
     bench_input: &BenchInput,
 ) -> Vec<BenchEngineAPIRequestSummary> {
+    // Setup Engine API credentials
+    let secret: Vec<u8> =
+        hex::decode(fs::read_to_string("config/jwt.hex").unwrap().trim()).unwrap();
+    let client = JwtClient::new(secret, "http://localhost:8551".to_string());
     let mut summaries = Vec::new();
 
     for sequence_element in &bench_input.sequence {

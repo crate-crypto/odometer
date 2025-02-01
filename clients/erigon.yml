@@ -1,0 +1,21 @@
+services:
+  erigon:
+    image: erigontech/erigon:latest
+    # TODO: Remove root
+    user: "root:root"
+
+    environment:
+      INIT_COMMAND: |
+        erigon --datadir=/data init /config/genesis.json
+      RUN_COMMAND: |
+        erigon --nodiscover \
+               --datadir=/data \
+               --networkid=1700 \
+               --authrpc.addr=0.0.0.0 \
+               --authrpc.port=8551 \
+               --authrpc.vhosts=* \
+               --authrpc.jwtsecret=/config/jwt.hex
+    extends:
+      file: ../config/docker/common.yml
+      service: base_client
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
