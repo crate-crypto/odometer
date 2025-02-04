@@ -1,0 +1,22 @@
+services:
+  reth:
+    # TODO: gchr.io would soon be deprecated
+    # Read: https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+    image: ghcr.io/paradigmxyz/reth:latest
+
+    environment:
+      INIT_COMMAND: |
+        reth init --datadir=/data \
+                  --chain=/config/genesis.json
+      RUN_COMMAND: |
+        reth node --disable-discovery \
+                  --datadir=/data \
+                  --chain=/config/genesis.json \
+                  --authrpc.addr=0.0.0.0 \
+                  --authrpc.port=8551 \
+                  --authrpc.jwtsecret=/config/jwt.hex
+
+    extends:
+      file: ../config/docker/common.yml
+      service: base_client
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
