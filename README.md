@@ -1,5 +1,8 @@
 # Odometer
 
+This has been moved to https://github.com/eth-applied-research-group/odometer
+
+
 A tool for benchmarking Ethereum clients.
 
 ## Prerequisites
